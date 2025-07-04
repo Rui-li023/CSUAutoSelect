@@ -16,6 +16,32 @@ con.read(file, encoding='utf-8')
 item = con.items('config')
 item = dict(item)
 
+def validate_config(config):
+	# num1, num2 check
+	try:
+		num1_read = int(config.get('num1', 0))
+		num2_read = int(config.get('num2', 0))
+	except ValueError:
+		print("错误：请检查 num1 或 num2")
+		sys.exit(1)
+
+	# id1 ~ idn check
+	for i in range(1, num1_read + 1):
+		key = f'id{i}'
+		if key not in config or not config[key].strip():
+			print(f"错误：请检查 {key}")
+			sys.exit(1)
+
+	# id_1 ~ id_n check
+	for i in range(1, num2_read + 1):
+		key = f'id_{i}'
+		if key not in config or not config[key].strip():
+			print(f"错误：请检查 {key}")
+			sys.exit(1)
+
+
+validate_config(item)
+
 global username, password
 
 Img_URL = 'http://csujwc.its.csu.edu.cn/jsxsd/verifycode.servlet'
@@ -37,6 +63,7 @@ with open('code.jpg', 'wb') as file:
 respond = session.get(LOGIN_URL)
 qrcode = input("输入验证码：")
 
+
 def login():
 	username = item['username']
 	password = item['password']
@@ -47,6 +74,7 @@ def login():
 	respond = session.post(LOGIN_URL, data)
 	respond = session.get(MAIN_URL)
 	return respond
+
 
 respond = login()
 
@@ -96,6 +124,7 @@ respond = session.get('http://csujwc.its.csu.edu.cn' + key[0])
 
 print('成功进入选课页面')
 
+
 def work(url):
 	try:
 		respond = session.get(url)
@@ -128,4 +157,3 @@ while True:
 		print('选课已完成，程序退出')
 		break
 	time.sleep(1)
-
