@@ -60,6 +60,33 @@ def login(session, username, password, qrcode):
     return respond
 
 
+def check_login_success(session):
+    """检查是否登录成功，通过访问主页面并检查内容来判断"""
+    try:
+        # 访问主页面
+        main_url = 'http://csujwc.its.csu.edu.cn/jsxsd/framework/xsMain.jsp'
+        response = session.get(main_url)
+        
+        # 检查响应内容，如果包含登录页面特征，说明登录失败
+        if '登录' in response.text and '用户名' in response.text:
+            return False
+        
+        # 检查是否包含学生主页面特征
+        if '学生' in response.text or 'xsMain' in response.text:
+            return True
+            
+        # 如果都不匹配，尝试访问其他页面来判断
+        test_url = 'http://csujwc.its.csu.edu.cn/jsxsd/xsxk/xklc_list'
+        test_response = session.get(test_url)
+        if '登录' in test_response.text:
+            return False
+            
+        return True
+    except Exception as e:
+        print(f"登录检测时发生错误: {e}")
+        return False
+
+
 def build_class_urls(config):
     semester = config['semester_code']
     public_count = int(config['public_course_count'])
@@ -113,11 +140,14 @@ def main():
     respond = session.get(LOGIN_URL)
     qrcode = input("输入验证码：")
     respond = login(session, config['username'], config['password'], qrcode)
-    if respond.status_code != requests.codes.ok:
+    
+    # 使用新的登录检测方法
+    if not check_login_success(session):
         print('学号或密码或验证码错误，请退出修改配置重启')
         sys.exit()
     else:
         print('成功登录教务系统')
+    
     class_urls = build_class_urls(config)
     # 进入选课页面
     while True:
